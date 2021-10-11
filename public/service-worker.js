@@ -1,3 +1,5 @@
+const idb = require("indexeDB");
+
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
@@ -10,11 +12,28 @@ const FILES_TO_CACHE = [
 const CACHE_NAME = "static-cache-v2";
 const DATA_CACHE_NAME = "data-cache-v1";
 
+function createDB() {
+  idb.open('transactions', 1, function(upgradeDB) {
+    var store = upgradeDB.createObjectStore('transaction', {
+      keyPath: 'id'
+    });
+  });
+};
+
+function readDB() {
+  idb.open('transactions', 1).then(function(db) {
+    var tx = db.transaction(['transaction'], 'readonly');
+    var store = tx.objectStore('transaction');
+    return store.getAll();
+  }).then(function(items) {
+  });
+};
+
 // install
 self.addEventListener("install", function(evt) {
   evt.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log("Your files were pre-cached successfully!");
+      console.log("Bat Cave is prepped for battle!");
       return cache.addAll(FILES_TO_CACHE);
     })
   );
@@ -28,14 +47,15 @@ self.addEventListener("activate", function(evt) {
       return Promise.all(
         keyList.map(key => {
           if (key !== CACHE_NAME && key !== DATA_CACHE_NAME) {
-            console.log("Removing old cache data", key);
+            console.log("Bat Cave has been swept for bugs", key);
             return caches.delete(key);
           }
         })
       );
     })
   );
-
+  createDB()
+  console.log("Bat Cave storage created")
   self.clients.claim();
 });
 
